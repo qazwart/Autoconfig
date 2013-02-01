@@ -1,0 +1,69 @@
+# MACRO: FOO_BAR WORDS
+# Q: What do you want uppercased?
+# FORCE: UC
+
+force.sentence=%FOO_BAR%
+
+# macro: client_or_server choice
+# Q: Is this a client or a server?
+# C: Client:client
+# C: Server:server
+
+# IF: client_or_server = server
+
+# macro: server_id integer
+# RANGE: 100 - 999
+# q: What is the ID of this server?
+# h: This should be a three digit integer
+#
+
+server_id=%SERVER_ID%
+
+# ENDIF:
+
+# IF: not client_or_server = server
+
+# macro: client_id Integer
+# Q: What is the client number?
+
+client_id=%client_id%
+
+# ENDIF:
+
+# MACRO: HOST_ID IPADDR
+# FROM: 10.1.0.0
+# TO: 10.1.0.255
+# Q: What is the host IP Address?
+
+host-id=%HOST_ID%
+
+# MACRO: EMAIL_HOST REGEX
+# FORMAT: [A-Z0-9]{2,4}\.mailhost.com
+# Q: What is the Mailhost name?
+#
+
+mailhost=%EMAIL_HOST%
+
+# MACRO: POOL_SIZE CHOICE
+# Q: How big should the Cache Poll be?
+# C: Small:10
+# C: Medium:30
+# C: Really, really big:100
+# D: 2
+#
+
+pool=%POOL_SIZE%
+
+
+# MACRO: START_PERIOD DATE
+# FORMAT: YY/MM
+# FROM: 10/01
+# Q: When should the start period begin?
+#
+
+start==%START_PERIOD%
+
+# MACRO: USER_ID
+# Q: What is thou User Id?
+
+user.id=%USER_ID%
