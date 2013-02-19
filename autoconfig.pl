@@ -399,6 +399,11 @@ sub parse_questions {
 	if ( $macro->can("Format") and not defined $macro->Format ) {
 	    error ( $macro, "", "", $macro->File, $macro->Line, "Missing required FORMAT field" );
 	    $error_count++;
+
+	if ( $macro->isa("Question::Default") and not $macro->Default ) {
+	    error ( $macro, "", "", $macro->File, $macro->Line, "Default Macro missing default answer" );
+	    $error_count++;
+	}
 	}
     } # for my $macro ( @macro_list )
 
@@ -600,6 +605,16 @@ sub ask_questions {
 		}
 	    }
 	} #for $if (@if_list)
+
+	# Don't Ask on Default Types. These aren't really questions
+	# Instead, this is a way to automatically set a default value
+	# which can be edited in an answer file.
+	#
+	if ( $macro->isa("Question::Default") ) {
+	    $macro->Answer($macro->Default);
+	    $question_number++;
+	    next QUESTION_NUMBER;
+	}
 
 	# Ask the Question
 	if ( not $given_intro ) {
@@ -1758,6 +1773,14 @@ sub Less_Than {
     return $self->SUPER::Less_Than ( $first, $second );
 }
 
+package Question::Default;
+use base qw(Question);
+sub Validate {
+    return 1;	#Always Valid
+}
+sub InRange {
+    return 1;	#Always in range
+}
 
 package Question::Ipaddr;
 use base qw(Question::Integer);
