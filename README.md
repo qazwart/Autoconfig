@@ -109,7 +109,7 @@ could already be in an Answer file, so when the program runs, it merely replaces
 with their actual values.
 
 If that's all this did, it wouldn't do much more than Ant does when it copies and filters
-files. However, the interesting point comes when a macro does not already have an answer. 
+files. However, the fun comes when a macro does not already have an answer. 
 In that case, this program will actually ask the user a question, verify the answer, and
 save the answer the next time this runs.
 
@@ -141,8 +141,16 @@ so the above definition could look like this too:
     # Q: What is the name of the user?
 
 The macro type (`STRING` in this case) is the second parameter on the `# MACRO:` line. If
-a macro type isn't given, it is assumed to be a macro type of string. The following are all
-of the valid Macro types:
+a macro type isn't given, it is assumed to be a macro type of string.
+
+If you specify that the Macro type is either `STRING` or `WORDS`, you can specify that
+the user could leave this as a blank value by specifying `NULL` or `NULL_OK` after the
+type parameter.
+
+    # MACRO PASSWORD STRING NULL_OK
+    # Q: What is your password?
+
+The following are all of the valid Macro types:
 
 - STRING
 
@@ -426,7 +434,14 @@ Descriptions cannot contain colons, but values may. For example:
 
      The values in the above example contain colons.
 
+Also note that choices can be null too:
 
+     # Macro: Password Choice
+     # Q: What Type of Password would you like?
+     # C: Really complex and hard to remember:123j12k3u=dqd1y398129731ho1dasksn
+     # C: Easier to remember, but strong:the-quot-flob-mober-3
+     # C: Easy to remember: swordfish
+     # C: None:
 
 # ETCETRICITIES
 
@@ -503,11 +518,11 @@ will be filled out like this:
 # AUTHOR
 
 David Weintraub
-[david@weintraub.name](mailto:david@weintraub.name)
+[mailto:david@weintraub.name](mailto:david@weintraub.name)
 
 # COPYRIGHT
 
-Copyright &copy; 2013 by David Weintraub. All rights reserved. This
+Copyright (c) 2013 by David Weintraub. All rights reserved. This
 program is covered by the open source BMAB license.
 
 The BMAB (Buy me a beer) license allows you to use all code for whatever
