@@ -1,4 +1,4 @@
-# MACRO: FOO_BAR WORDS
+# MACRO: FOO_BAR WORDS NULL_OK
 # Q: What do you want uppercased?
 # FORCE: UC
 
@@ -49,6 +49,7 @@ mailhost=%EMAIL_HOST%
 # C: Small:10
 # C: Medium:30
 # C: Really, really big:100
+# C: No value at all:
 # D: 2
 #
 
@@ -61,9 +62,9 @@ pool=%POOL_SIZE%
 # Q: When should the start period begin?
 #
 
-start==%START_PERIOD%
+start=%START_PERIOD%
 
-# MACRO: USER_ID
+# MACRO: USER_ID STRING NULL_OK
 # Q: What is thou User Id?
 
 user.id=%USER_ID%
