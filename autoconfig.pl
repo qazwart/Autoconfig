@@ -19,51 +19,52 @@ use File::Copy;
 use File::Find;
 
 use constant {
-    COMMENT_LINE =>	qr@^(?:#|//)\s*@,
-    COMMENT_MARK =>	qr@^(#|//)@,		       #For capturing what the comment mark is
-    ONE_PARAM =>	qr/\s+(.*)/,
-    TWO_PARAMS =>	qr/\s+(\S+)\s+(?:-\s+)?(\S+)/, #Dash is optional
-    ONE_TWO_PARAMS =>	qr/\s+(\S+)(?:\s+(\S+))?/,     #Macro Line could be one or two parameters
-    START_XML_COMMENT => qq(<!--),
-    END_XML_COMMENT =>  qq(-->),
+    COMMENT_LINE	=> qr@^(?:#|//)\s*@,
+    COMMENT_MARK	=> qr@^(#|//)@,		       #For capturing what the comment mark is
+    ONE_PARAM		=> qr/\s+(.*)/,
+    TWO_PARAMS		=> qr/\s+(\S+)\s+(?:-\s+)?(\S+)/, #Dash is optional
+    ONE_TWO_PARAMS	=> qr/\s+(\S+)(?:\s+)?(\S+)?(?:\s+)?(\S+)?/, 
+    START_XML_COMMENT	=> qq(<!--),
+    END_XML_COMMENT	=>  qq(-->),
+    NULL_OK		=> qr@^NULL(:?_OK)$@i,
 };
 
 use constant {
-    MACRO =>		"MACRO",
-    RANGE =>		"RANGE",
-    FORMAT =>		"FORMAT",
-    FORCE =>		"FORCE",
-    FROM =>		"FROM",
-    TO =>		"TO",
-    QUESTION =>		"Q",
-    HELP =>		"H",
-    DEFAULT =>		"D",
-    CHOICE =>		"C",
-    IF =>		"IF",
-    ENDIF =>		"ENDIF",
+    MACRO		=> "MACRO",
+    RANGE		=> "RANGE",
+    FORMAT		=> "FORMAT",
+    FORCE		=> "FORCE",
+    FROM		=> "FROM",
+    TO			=> "TO",
+    QUESTION		=> "Q",
+    HELP		=> "H",
+    DEFAULT		=> "D",
+    CHOICE		=> "C",
+    IF			=> "IF",
+    ENDIF		=> "ENDIF",
 };
 
 use constant {
-    MACRO_LINE =>	qr/@{[COMMENT_LINE]}@{[MACRO]}:@{[ONE_TWO_PARAMS]}/i,	#Macro Name and Type
-    RANGE_LINE=>	qr/@{[COMMENT_LINE]}@{[RANGE]}:@{[TWO_PARAMS]}/i, 
-    FORMAT_LINE =>	qr/@{[COMMENT_LINE]}@{[FORMAT]}:@{[ONE_PARAM]}/i,
-    FORCE_LINE =>	qr/@{[COMMENT_LINE]}@{[FORCE]}:@{[ONE_PARAM]}/i,
-    FROM_LINE =>	qr/@{[COMMENT_LINE]}@{[FROM]}:@{[ONE_PARAM]}/i,
-    TO_LINE =>		qr/@{[COMMENT_LINE]}@{[TO]}:@{[ONE_PARAM]}/i,
-    QUESTION_LINE =>	qr/@{[COMMENT_LINE]}@{[QUESTION]}:@{[ONE_PARAM]}/i,
-    HELP_LINE =>	qr/@{[COMMENT_LINE]}@{[HELP]}:@{[ONE_PARAM]}/i,
-    CHOICE_LINE =>	qr/@{[COMMENT_LINE]}@{[CHOICE]}:@{[ONE_PARAM]}/i,
-    DEFAULT_LINE =>	qr/@{[COMMENT_LINE]}@{[DEFAULT]}:@{[ONE_PARAM]}/i,
-    IF_LINE =>		qr/@{[COMMENT_LINE]}@{[IF]}:\s+(?:(NOT)\s+)?(\S+)\s+(?:=\s)?(.*)/i,
-    ENDIF_LINE =>	qr/@{[COMMENT_LINE]}@{[ENDIF]}:/i,
-    ANSWER_LINE =>	qr/^(\S+)\s*=\s*(.*)/,	# macro_name = answer
+    MACRO_LINE		=> qr/@{[COMMENT_LINE]}@{[MACRO]}:@{[ONE_TWO_PARAMS]}/i,	#Macro Name and Type
+    RANGE_LINE		=> qr/@{[COMMENT_LINE]}@{[RANGE]}:@{[TWO_PARAMS]}/i, 
+    FORMAT_LINE		=> qr/@{[COMMENT_LINE]}@{[FORMAT]}:@{[ONE_PARAM]}/i,
+    FORCE_LINE		=> qr/@{[COMMENT_LINE]}@{[FORCE]}:@{[ONE_PARAM]}/i,
+    FROM_LINE		=> qr/@{[COMMENT_LINE]}@{[FROM]}:@{[ONE_PARAM]}/i,
+    TO_LINE		=> qr/@{[COMMENT_LINE]}@{[TO]}:@{[ONE_PARAM]}/i,
+    QUESTION_LINE	=> qr/@{[COMMENT_LINE]}@{[QUESTION]}:@{[ONE_PARAM]}/i,
+    HELP_LINE		=> qr/@{[COMMENT_LINE]}@{[HELP]}:@{[ONE_PARAM]}/i,
+    CHOICE_LINE		=> qr/@{[COMMENT_LINE]}@{[CHOICE]}:@{[ONE_PARAM]}/i,
+    DEFAULT_LINE	=> qr/@{[COMMENT_LINE]}@{[DEFAULT]}:@{[ONE_PARAM]}/i,
+    IF_LINE		=> qr/@{[COMMENT_LINE]}@{[IF]}:\s+(?:(NOT)\s+)?(\S+)\s+(?:=\s)?(.*)/i,
+    ENDIF_LINE		=> qr/@{[COMMENT_LINE]}@{[ENDIF]}:/i,
+    ANSWER_LINE		=> qr/^(\S+)\s*=\s*(.*)/,	# macro_name = answer
 };
 
-my $answer_file = 	"autoconfig.answers";
-my $suffix =		".template";
-my $help_string = 	"HELP!";
-my $prev_string =	"PREV!";
-my @directory_list =	qw(.);
+my $answer_file		= "autoconfig.answers";
+my $suffix		= ".template";
+my $help_string		= "HELP!";
+my $prev_string		= "PREV!";
+my @directory_list	= qw(.);
 
 ########################################################################
 # GET OPTIONS
@@ -71,14 +72,14 @@ my @directory_list =	qw(.);
 my ( $use_defaults, 	$help,		$option_help );
 
 GetOptions (
-    "answers=s" => 		\$answer_file,
-    "suffix=s" =>		\$suffix,
-    "defaults" =>		\$use_defaults,
-    "directory=s" =>		\@directory_list,
-    "helpstring=s" =>		\$help_string,
-    "prevstring=s" =>		\$prev_string,
-    "help" =>			\$help,
-    "options" =>		\$option_help,
+    "answers=s"		=> \$answer_file,
+    "suffix=s"		=> \$suffix,
+    "defaults"		=> \$use_defaults,
+    "directory=s"	=> \@directory_list,
+    "helpstring=s"	=> \$help_string,
+    "prevstring=s"	=> \$prev_string,
+    "help"		=> \$help,
+    "options"		=> \$option_help,
 ) or pod2usage ( 
     {
 	-message =>	"Error: Bad options",
@@ -90,7 +91,7 @@ GetOptions (
 if ( $help ) {
     pod2usage (
 	{
-	    -message => 	"For more detailed description, use '-options'",
+	    -message => "For more detailed description, use '-options'",
 	    -verbose =>	0,
 	    -exitval =>	0,
 	}
@@ -235,7 +236,9 @@ sub parse_questions {
 	    if ( $line =~ MACRO_LINE ) {
 		my $macro_name = $1;
 		my $type = $2;
-		$type = "string" if not defined $type;
+		my $null_ok = $3;
+		$type = "string" unless defined $type;
+		$null_ok = "" unless defined $null_ok;
 
 		#
 		# Close out previous Macro definition
@@ -265,6 +268,9 @@ sub parse_questions {
 		);
 		if ( not $macro ) {
 		    die qq(Invalid Macro Type: "$type" for "$macro_name": File: $file line: $file_line\n);
+		}
+		if ( $macro->can("Null_ok") and $null_ok =~ NULL_OK ) {
+		    $macro->Null_ok(1);
 		}
 	    }
 	    elsif ( $line =~ RANGE_LINE ) {
@@ -652,10 +658,15 @@ sub ask_questions {
 		    $macro->Answer( $default );
 		    last;
 		}
+		elsif ( $macro->can("Null_ok" )
+			and $macro->Null_ok ) {	#Answers can be null
+		    $macro->Answer( $answer );
+		}
 		else {
 		    print qq(You must answer the question.\n);
 		    my $text = display_help_text( $macro );
 		    print "$text\n\n";
+		    next;
 		}
 	    }
 	    if ( $answer eq $help_string ) {
@@ -789,7 +800,12 @@ sub question_answer {
 
     my $answer_text;
 
-    $answer_text .= "# @{[MACRO]}: $macro_name $type\n";
+    $answer_text .= "# @{[MACRO]}: $macro_name $type";
+    if ( $macro->can("Null_ok") and $macro->Null_ok ) {
+	$answer_text .= " NULL_OK";
+    }
+    $answer_text .= "\n";
+
     $answer_text .= "# @{[FORMAT]}: $format\n" if $format;
     $answer_text .= "# File: $file_name  Line $file_line\n";
     if ( not $macro->isa("Question::Choice") ) { #Don't put From and To range for Choice Macro
@@ -1216,7 +1232,7 @@ sub _type {
     my $type = shift;
 
     if ( defined $type ) {
-	$self->{TYPE} = $type;
+	$self->{TYPE} = uc $type;
     }
 
     return $self->{TYPE};
@@ -1246,6 +1262,7 @@ sub _macro {
     return $self->{MACRO};
 }
 
+#
 # Accessor Method for "Question" text.
 #
 sub Question {
@@ -1411,6 +1428,21 @@ sub Less_Than {
     return $first le $second;
 }
 
+sub Null_ok {
+    my $self		= shift;
+    my $null_ok		= shift;
+
+    if ( defined $null_ok ) {
+	if ( $null_ok  == 0 ) {
+	    $self->{NULL_OK} = undef;
+	}
+	else {
+	    $self->{NULL_OK} = 1;
+	}
+    }
+    return $self->{NULL_OK};
+}
+
 ########################################################################
 # PACKAGE Question::Words
 #
@@ -1420,7 +1452,7 @@ sub Less_Than {
 # Also, there's the ability to force Answers to be upper or lower case
 
 package Question::Words;
-use base qw(Question);
+use base qw(Question::String);
 
 use Carp;
 
@@ -1633,6 +1665,9 @@ sub _convert_to_seconds {
     my $self = shift;
     my $date = shift;
 
+    if ( not $date ) {
+	return;
+    }
     # @time_list will be used by the timegm function
     # for converting time to seconds. 
     my @time_list = qw(0 0 0 1 1 1970);	#Default Values
@@ -1682,6 +1717,13 @@ sub _convert_to_seconds {
 		return;
 	    }
 	}
+    }
+    #
+    # Hours and Month should be numeric
+    #
+    if ( $time_list[HOURS_LOCATION] !~ /^\d+$/ 
+	    or $time_list[MONTH_LOCATION] !~ /^\d+$/ ) {
+	return;
     }
     $time_list[HOURS_LOCATION] += $meridian_offset; #If PM, must add 12 to it
     $time_list[MONTH_LOCATION] -= 1; #Months in timegm go from 0-11. Not 1-12
@@ -2266,7 +2308,7 @@ could already be in an Answer file, so when the program runs, it merely replaces
 with their actual values.
 
 If that's all this did, it wouldn't do much more than Ant does when it copies and filters
-files. However, the interesting point comes when a macro does not already have an answer. 
+files. However, the fun comes when a macro does not already have an answer. 
 In that case, this program will actually ask the user a question, verify the answer, and
 save the answer the next time this runs.
 
@@ -2298,8 +2340,16 @@ so the above definition could look like this too:
     # Q: What is the name of the user?
 
 The macro type (C<STRING> in this case) is the second parameter on the C<# MACRO:> line. If
-a macro type isn't given, it is assumed to be a macro type of string. The following are all
-of the valid Macro types:
+a macro type isn't given, it is assumed to be a macro type of string.
+
+If you specify that the Macro type is either C<STRING> or C<WORDS>, you can specify that
+the user could leave this as a blank value by specifying C<NULL> or C<NULL_OK> after the
+type parameter.
+
+    # MACRO PASSWORD STRING NULL_OK
+    # Q: What is your password?
+
+The following are all of the valid Macro types:
 
 =over 10
 
@@ -2606,6 +2656,14 @@ Descriptions cannot contain colons, but values may. For example:
 
      The values in the above example contain colons.
 
+Also note that choices can be null too:
+
+     # Macro: Password Choice
+     # Q: What Type of Password would you like?
+     # C: Really complex and hard to remember:123j12k3u=dqd1y398129731ho1dasksn
+     # C: Easier to remember, but strong:the-quot-flob-mober-3
+     # C: Easy to remember: swordfish
+     # C: None:
 
 =head1 ETCETRICITIES
 
