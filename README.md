@@ -477,6 +477,33 @@ Also note that choices can be null too:
      # C: Easy to remember: swordfish
      # C: None:
 
+# SPECIAL MACRO NAMES
+
+There are two sets of special macro names. These are not set by macro
+questions, but by the environmet.
+
+## \_ENV\_ Macros
+
+The `_ENV_` macros start with the string `_ENV_` and the name of the
+environment variable is appended to the end of the macro name. There is
+one of these special `_ENV_` macros for each environment variable in
+your system. Case is insignificant, so if you have `PATH` and `path`
+as two environment variables, only one will be `_ENV_PATH`, but we
+cannot say which one would be used.
+
+This allows you to use environment variables in your Macros.
+
+## \_SP\_ Macros
+
+There are some _special_ macro values that are automatically generated.
+These include:
+
+- `_SP_HOSTNAME`: The hostname of the system (may include domain
+name).
+- `_SP_SHORTHOSTNAME_`: The hostname of the system minus any
+domain name information (everything after the first `.` is stripped
+off).
+
 # ETCETRICITIES
 
 Included in this project is a sample template. Use this to explore this program.

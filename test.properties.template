@@ -68,3 +68,11 @@ start=%START_PERIOD%
 # Q: What is thou User Id?
 
 user.id=%USER_ID%
+
+host.name=%_SP_HOSTNAME%
+
+short.host.name=%_SP_SHORTHOSTNAME%
+
+home.dir=%_ENV_HOME%
+
+foo.dir=%_ENV_FOO%

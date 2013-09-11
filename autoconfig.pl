@@ -17,6 +17,7 @@ use Pod::Usage;
 use Data::Dumper;
 use File::Copy;
 use File::Find;
+use Sys::Hostname;
 
 use constant {
     COMMENT_LINE	=> qr@^(?:<\!--|#|//)\s*@,
@@ -963,6 +964,25 @@ sub fill_in_templates {
 	    $macro_hash{ $macro->Macro } = $macro->Answer;
 	}
     }
+
+    #
+    # Add in Environment variables into %macro_hash
+    # Environment variables are in the form _ENV_VARNAME
+    # For example _ENV_HOME = "/Users/David"
+    #
+    for my $environment_variable ( keys %ENV ) {
+	my $macro_name = uc( "_ENV_" . $environment_variable );
+	$macro_hash{$macro_name} = $ENV{$environment_variable};
+    }
+
+    #
+    # Add in special Macro names. So far, these are _SP_HOSTNAME and _SP_SHORTHOSTNAME
+    #
+
+    my $hostname = hostname;
+    ( my $short_hastname = $hostname ) =~ s/\..*//;	#Remove domain information
+    $macro_hash{_SP_HOSTNAME} = $hostname;
+    $macro_hash{_SP_SHORTHOSTNAME} = $short_hastname;
 
     my @if_list;	#List of If Macros
 
@@ -2754,6 +2774,38 @@ Also note that choices can be null too:
      # C: Easier to remember, but strong:the-quot-flob-mober-3
      # C: Easy to remember: swordfish
      # C: None:
+
+=head1 SPECIAL MACRO NAMES
+
+There are two sets of special macro names. These are not set by macro
+questions, but by the environmet.
+
+=head2 _ENV_ Macros
+
+The C<_ENV_> macros start with the string C<_ENV_> and the name of the
+environment variable is appended to the end of the macro name. There is
+one of these special C<_ENV_> macros for each environment variable in
+your system. Case is insignificant, so if you have C<PATH> and C<path>
+as two environment variables, only one will be C<_ENV_PATH>, but we
+cannot say which one would be used.
+
+This allows you to use environment variables in your Macros.
+
+=head2 _SP_ Macros
+
+There are some I<special> macro values that are automatically generated.
+These include:
+
+=over 4
+
+=item * C<_SP_HOSTNAME>: The hostname of the system (may include domain
+name).
+
+=item * C<_SP_SHORTHOSTNAME_>: The hostname of the system minus any
+domain name information (everything after the first C<.> is stripped
+off).
+
+=back
 
 =head1 ETCETRICITIES
 
