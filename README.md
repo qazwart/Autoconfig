@@ -46,11 +46,10 @@ the questions.
     which template file it was located in. For example, the above might get
     rewritten as:
 
-        # MACRO: MY_MACRO STRING
-        # File: ./foo/bar/some.template:23
-        # Q: What is the value of your Macro?
-        
-
+            # MACRO: MY_MACRO STRING
+            # File: ./foo/bar/some.template:23
+            # Q: What is the value of your Macro?
+            
         MY_MACRO = The macro's value
 
     The default Answer file is called `autoconfig.answers`
@@ -351,17 +350,9 @@ Some macros types take other possible parameters:
     In this case, the date is expected to have a four character year, and a
     2 character month and day separated by dashes. For example:
 
-    - 2001-01-15
-
-        Valid
-
-    - 20010115
-
-        Invalid
-
-    - 2001/01/15
-
-        Invalid
+    - `2001-01-15`  - Valid
+    - `20010115` - Invalid
+    - `2001/01/15` - Invalid
 
     You can also do time definitions too:
 
@@ -477,6 +468,50 @@ Also note that choices can be null too:
      # C: Easy to remember: swordfish
      # C: None:
 
+# IF CLAUSES
+
+Sometimes you need special sections depending upon the type of system.
+For example, if you have a server, you may need to ask the port the
+server should use. If you have a client machine, you may need the name
+of the server.
+
+Autoconfig.pl allows you to add if clauses into your templates. If the
+IF statement is false, autoconfig.pl will _comment out_ the file by
+using the comment marker used to demarcate the IF clause itself. If the
+command is XML, then the XML start and end comment will be added to each
+and every line. Becareful about using XML comments inside the template
+file in sections that are inside IF clauses.
+
+## IF MACRO
+
+The IF Clause begins with the IF macro:
+
+    # IF: MACHINE_TYPE = SERVER
+
+or
+
+    # IF: MACHINE_TYPE SERVER.
+
+Note, I can leave out the equal sign. You can negate the `IF:` clause
+by using the word `NOT` after the `IF:` string:
+
+    # IF: NOT MACHINE_TYPE = SERVER
+
+or
+
+    # IF: NOT MACHINE_TYPE SERVER.
+
+These lines will be commented out _if_ the macro does equal the value.
+
+## ENDIF: MACRO
+
+The `IF:` clause is ended by a `ENDIF:` statement:
+
+    # IF: NOT MACHINE = SERVER
+    server_name=%server_name%
+    # ENDIF:
+    # IF: MACHINE = SERVER 
+
 # SPECIAL MACRO NAMES
 
 There are two sets of special macro names. These are not set by macro
@@ -510,91 +545,28 @@ Included in this project is a sample template. Use this to explore this program.
 
 ## XML HTML File Handling
 
-This program allows for XML file handling if you take certain
-precautions. This mainly has to do with the way that the IF/ENDIF
-process works.
+This program allows for XML file handling. However, because XML comments
+require both an opening and closing comment character, special care must
+be taken:
 
-You need to surround the all macro definition lines and IF/ENDIF lines
-with comment marks, and everything should be just fine. For example:
+1. The macro definitions  must begin with a `<!--` and end with `-->`.
+2. When using `IF:` and `ENDIF:` macros, you must make sure you don't put
+comments into the lines that will be commented out. XML doesn't like
+comments within comments, and this may produce XML errors.
+3. Autoconfig.pl will use the comment style that the `IF:` macro lines begins
+with. Make sure your `IF:` macro line begins with a `<!--`:
 
-     <!--
-     #  Macro: server_flag choice
-     #  Q: Is this a server?
-     #  C: Yes:TRUE
-     #  C: No:FALSE
-     -->
+    Wrong: This will attempt to comment out the XML by prefixing the lines
+    with `#`.
 
-     <!--
-     # IF: NOT SERVER_FLAG = TRUE
-     -->
+        <!--
+        # IF: SYSTEM_TYPE = SERVER
+        -->
 
-     <!--
-     # Macro: SERVER_ID String
-     # Q: What's the Server ID?
-     -->
+    Right: This will comment out the lines as XML style comments
 
-     <!--
-     # ENDIF:
-     -->
-
-     <!--
-     # Macro: password string
-     # Q: What is the user password?
-     -->
-
-     <password>%PASSWORD%</password>
-
-In the above example, this program will remove any stand alone XML
-comment markers if the user said that this is NOT a server. This should
-allow the XML to remain valid.  If the user said this is not a server,
-and the password was `swordfish`, the above will be filled out like
-this:
-
-     <!--
-     #  Macro: server_flag choice
-     #  Q: Is this a server?
-     #  C: Yes:TRUE
-     #  C: No:FALSE
-     -->
-
-     <!--
-     # IF: NOT SERVER_FLAG = TRUE
-     #
-     #
-     #
-     # Macro: SERVER_ID String
-     # Q: What's the Server ID?
-     #
-     #
-     #
-     #
-     # ENDIF:
-     -->
-
-     <!--
-     # Macro: password string
-     # Q: What is the user password?
-     -->
-
-     <password>swordfish</password>
+        <!-- IF: SYSTEM_TYPE = SERVER -->
 
 # AUTHOR
 
-David Weintraub
-[mailto:david@weintraub.name](mailto:david@weintraub.name)
-
-# COPYRIGHT
-
-Copyright (c) 2013 by David Weintraub. All rights reserved. This
-program is covered by the open source BMAB license.
-
-The BMAB (Buy me a beer) license allows you to use all code for whatever
-reason you want with these three caveats:
-
-1. If you make any modifications in the code, please consider sending them
-to me, so I can put them into my code.
-2. Give me attribution and credit on this program.
-3. If you're in town, buy me a beer. Or, a cup of coffee which is what I'd
-prefer. Or, if you're feeling really spendthrify, you can buy me lunch.
-I promise to eat with my mouth closed and to use a napkin instead of my
-sleeves.
+David Weintraub [mailto:dweintraub@travelclick.net](mailto:dweintraub@travelclick.net)

@@ -56,7 +56,7 @@ use constant {
     HELP_LINE		=> qr/@{[COMMENT_LINE]}@{[HELP]}:@{[ONE_PARAM]}/i,
     CHOICE_LINE		=> qr/@{[COMMENT_LINE]}@{[CHOICE]}:@{[ONE_PARAM]}/i,
     DEFAULT_LINE	=> qr/@{[COMMENT_LINE]}@{[DEFAULT]}:@{[ONE_PARAM]}/i,
-    IF_LINE		=> qr/@{[COMMENT_LINE]}@{[IF]}:\s+(?:(NOT)\s+)?(\S+)\s+(?:=\s)?(.*?)(?:\s*@{[END_XML_COMMENT]})/i,
+    IF_LINE		=> qr/@{[COMMENT_LINE]}@{[IF]}:\s+(?:(NOT)\s+)?(\S+)\s+(?:=\s)?(\S+)(?:\s*@{[END_XML_COMMENT]})?/i,
     ENDIF_LINE		=> qr/@{[COMMENT_LINE]}@{[ENDIF]}:/i,
     ANSWER_LINE		=> qr/^(\S+)\s*=\s*(.*)/,	# macro_name = answer
 };
@@ -65,7 +65,7 @@ my $answer_file		= "autoconfig.answers";
 my $suffix		= ".template";
 my $help_string		= "HELP!";
 my $prev_string		= "PREV!";
-my @directory_list	= qw(.);
+my @directory_list;
 
 ########################################################################
 # GET OPTIONS
@@ -92,12 +92,16 @@ if ( defined $test_option
     );
 }
 
+if ( not @directory_list ) {
+    @directory_list = qw(.);
+}
+
 if ( $help ) {
-    pod2usage ( -exitval => 0 )
+    pod2usage;
 }
 
 if ( $option_help ) {
-    pod2usage ( -verbose => 1 );
+    pod2usage ( -verbose => 2 );
 }
 #
 ########################################################################
@@ -249,7 +253,7 @@ sub parse_questions {
 		    my $macro = $macro_list[ $macro_hash{ $macro_name } ];
 		    my $prev_file = $macro->File;
 		    my $prev_line = $macro->Line;
-		    warn qq(Macro "$macro_name" already exists: Found in file "$file" line: $file_line\n) .
+		    warn qq(AUTOCONFIG: Macro "$macro_name" already exists: Found in file "$file" line: $file_line\n) .
 		    qq(Previously found in file "$prev_file" in line $prev_line.);
 		    $error_count++;
 		}
@@ -260,7 +264,7 @@ sub parse_questions {
 		    line => $file_line,
 		);
 		if ( not $macro ) {
-		    die qq(Invalid Macro Type: "$type" for "$macro_name": File: $file line: $file_line\n);
+		    die qq(AUTOCONFIG: Invalid Macro Type: "$type" for "$macro_name": File: $file line: $file_line\n);
 		}
 		if ( $macro->can("Null_ok") and $null_ok =~ NULL_OK ) {
 		    $macro->Null_ok(1);
@@ -270,7 +274,7 @@ sub parse_questions {
 		my $from = $1;
 		my $to = $2;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line);
 		    $error_count++;
 		    next;
 		}
@@ -286,7 +290,7 @@ sub parse_questions {
 	    elsif ( $line =~ FORMAT_LINE ) {
 		my $format = $1;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line);
 		    $error_count++;
 		    next;
 		}
@@ -302,7 +306,7 @@ sub parse_questions {
 	    elsif ( $line =~ FORCE_LINE ) {
 		my $format = $1;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line);
 		    $error_count++;
 		    next;
 		}
@@ -318,7 +322,7 @@ sub parse_questions {
 	    elsif ( $line =~ FROM_LINE ) {
 		my $from = $1;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line\n);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line\n);
 		    $error_count++;
 		    next;
 		}
@@ -330,7 +334,7 @@ sub parse_questions {
 	    elsif ( $line =~ TO_LINE ) {
 		my $to = $1;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line\n);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line\n);
 		    $error_count++;
 		    next;
 		}
@@ -342,7 +346,7 @@ sub parse_questions {
 	    elsif ( $line =~ QUESTION_LINE ) {
 		my $question = $1;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line\n);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line\n);
 		    $error_count++;
 		    next;
 		}
@@ -354,7 +358,7 @@ sub parse_questions {
 	    elsif ( $line =~ HELP_LINE ) {
 		my $help = $1;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line\n);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line\n);
 		    $error_count++;
 		    next;
 		}
@@ -366,7 +370,7 @@ sub parse_questions {
 	    elsif ( $line =~ DEFAULT_LINE ) {
 		my $default = $1;
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line\n);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line\n);
 		    $error_count++;
 		    next;
 		}
@@ -383,12 +387,12 @@ sub parse_questions {
 		}
 		my $selection = Question::Choice::Selection->new($description, $value);
 		if ( not defined $macro ) {
-		    warn qq(WARNING: Bad macro definition at "$file" on line $file_line\n);
+		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line\n);
 		    $error_count++;
 		    next;
 		}
 		if ( not defined $macro->Add_Choice($selection) ) {
-		    warn qq(Cannot create Choice from "$choice". File "$file" Line $file_line\n);
+		    warn qq(AUTOCONFIG: Cannot create Choice from "$choice". File "$file" Line $file_line\n);
 		    $error_count++;
 		}
 	    }
@@ -436,16 +440,16 @@ sub parse_questions {
 	next unless $macro->isa( "Question" ); #Skip non-questions
 
 	if ( not defined $macro->Question ) { # Make sure all Macros have a Question
-	    error ( $macro, "", "", $macro->File, $macro->Line, "Missing required QUESTION field" );
+	    error ( $macro, "", "", $macro->File, $macro->Line, "AUTOCONFIG: Missing required QUESTION field" );
 	    $error_count++;
 	}
 
 	if ( $macro->can("Format") and not defined $macro->Format ) {
-	    error ( $macro, "", "", $macro->File, $macro->Line, "Missing required FORMAT field" );
+	    error ( $macro, "", "", $macro->File, $macro->Line, "AUTOCONFIG: Missing required FORMAT field" );
 	    $error_count++;
 
 	if ( $macro->isa("Question::Default") and not $macro->Default ) {
-	    error ( $macro, "", "", $macro->File, $macro->Line, "Default Macro missing default answer" );
+	    error ( $macro, "", "", $macro->File, $macro->Line, "AUTOCONFIG: Default Macro missing default answer" );
 	    $error_count++;
 	}
 	}
@@ -526,7 +530,7 @@ sub read_in_answers {
 	    my $answer = $2;
 
 	    if ( not exists $macro_index{ $macro_name } ) {
-		warn qq(Macro "$macro_name" found in Answer file, but it isn't a define Macro\n);
+		warn qq(AUTOCONFIG: Macro "$macro_name" found in Answer file, but it isn't a define Macro\n);
 		$error_count++;
 		next;
 	    }
@@ -573,7 +577,7 @@ sub fill_in_defaults {
 		my $macro_name = $macro_list[ $position ]->Macro;
 		my $file_name =  $macro_list[ $position ]->File;
 		my $line_num =   $macro_list[ $position ]->Line;
-		warn qq(Default answer "$default" is invalid for Macro "$macro_name"\n) .
+		warn qq(AUTOCONFIG: Default answer "$default" is invalid for Macro "$macro_name"\n) .
 		qq(Macro is define in file "$file_name" Line: $line_num);
 		$number_of_errors++;
 	    }
@@ -683,7 +687,7 @@ sub ask_questions {
 	my $line_number = $macro->Line;
 
 	if ( $test_option ) { #Don't ask questions: Show unanswered questions only
-	    print qq(NO ANSWER: $macro_name in $file_name line #$line_number\n);
+	    print qq(AUTOCONFIG: NO ANSWER: $macro_name in $file_name line #$line_number\n);
 	    $question_number++;
 	    next QUESTION_NUMBER;
 	}
@@ -791,11 +795,11 @@ sub create_answer_file {
 
     if ( -e $answer_file ) {
 	if (not move $answer_file, "$answer_file.backup") {
-	    warn qq(Cannot backup answer file "$answer_file"\n);
+	    warn qq(AUTOCONFIG: Cannot backup answer file "$answer_file"\n);
 	}
     }
     open my $answer_file_fh, ">", $answer_file or
-	die qq(Can't open Answer file "$answer_file" for writing.);
+	die qq(AUTOCONFIG: Can't open Answer file "$answer_file" for writing.);
 
     for my $macro (@macro_list) {
 	my $file_text;
@@ -1077,7 +1081,7 @@ FILE_LINE:
 		    $line =~ s/%$macro%/$macro_value/ig;
 		}
 		else {
-		    warn qq(WARNING: Possible missing definition for macro "%$macro%": ) .
+		    warn qq(AUTOCONFIG: WARNING: Possible missing definition for macro "%$macro%": ) .
 			qq(File "$template_file" Line: $file_line\n);
 		}
 	    } #for my $macro ( @macro_list )
@@ -1103,11 +1107,11 @@ sub error {
     my $reason = shift;
 
     if ( not defined $reason ) {
-	warn qq(\nError in setting "$method" for Macro ") . $macro->Macro
+	warn qq(\nAUTOCONFIG: Error in setting "$method" for Macro ") . $macro->Macro
 	. qq(" with value "$value" in File "$file" on Line $line\n);
     }
     else {
-	warn qq(\nError in Macro ") . $macro->Macro . qq(": $reason. File $file Line $line\n);
+	warn qq(\nAUTOCONFIG: Error in Macro ") . $macro->Macro . qq(": $reason. File $file Line $line\n);
     }
     return;
 }
@@ -2641,17 +2645,17 @@ In this case, the date is expected to have a four character year, and a
 
 =over 10
 
-=item  2001-01-15
+=item  *
 
-Valid
+C<2001-01-15>  - Valid
 
-=item 20010115
+=item *
 
-Invalid
+C<20010115> - Invalid
 
-=item 2001/01/15
+=item *
 
-Invalid
+C<2001/01/15> - Invalid
 
 =back
 
@@ -2775,6 +2779,50 @@ Also note that choices can be null too:
      # C: Easy to remember: swordfish
      # C: None:
 
+=head1 IF CLAUSES
+
+Sometimes you need special sections depending upon the type of system.
+For example, if you have a server, you may need to ask the port the
+server should use. If you have a client machine, you may need the name
+of the server.
+
+Autoconfig.pl allows you to add if clauses into your templates. If the
+IF statement is false, autoconfig.pl will I<comment out> the file by
+using the comment marker used to demarcate the IF clause itself. If the
+command is XML, then the XML start and end comment will be added to each
+and every line. Becareful about using XML comments inside the template
+file in sections that are inside IF clauses.
+
+=head2 IF MACRO
+
+The IF Clause begins with the IF macro:
+
+    # IF: MACHINE_TYPE = SERVER
+
+or
+
+    # IF: MACHINE_TYPE SERVER.
+
+Note, I can leave out the equal sign. You can negate the C<IF:> clause
+by using the word C<NOT> after the C<IF:> string:
+
+    # IF: NOT MACHINE_TYPE = SERVER
+
+or
+
+    # IF: NOT MACHINE_TYPE SERVER.
+
+These lines will be commented out I<if> the macro does equal the value.
+
+=head2 ENDIF: MACRO
+
+The C<IF:> clause is ended by a C<ENDIF:> statement:
+
+    # IF: NOT MACHINE = SERVER
+    server_name=%server_name%
+    # ENDIF:
+    # IF: MACHINE = SERVER 
+
 =head1 SPECIAL MACRO NAMES
 
 There are two sets of special macro names. These are not set by macro
@@ -2813,105 +2861,43 @@ Included in this project is a sample template. Use this to explore this program.
 
 =head2 XML HTML File Handling
 
-This program allows for XML file handling if you take certain
-precautions. This mainly has to do with the way that the IF/ENDIF
-process works.
-
-You need to surround the all macro definition lines and IF/ENDIF lines
-with comment marks, and everything should be just fine. For example:
-
-     <!--
-     #  Macro: server_flag choice
-     #  Q: Is this a server?
-     #  C: Yes:TRUE
-     #  C: No:FALSE
-     -->
-
-     <!--
-     # IF: NOT SERVER_FLAG = TRUE
-     -->
-
-     <!--
-     # Macro: SERVER_ID String
-     # Q: What's the Server ID?
-     -->
-
-     <!--
-     # ENDIF:
-     -->
-
-     <!--
-     # Macro: password string
-     # Q: What is the user password?
-     -->
-
-     <password>%PASSWORD%</password>
-
-In the above example, this program will remove any stand alone XML
-comment markers if the user said that this is NOT a server. This should
-allow the XML to remain valid.  If the user said this is not a server,
-and the password was C<swordfish>, the above will be filled out like
-this:
-
-     <!--
-     #  Macro: server_flag choice
-     #  Q: Is this a server?
-     #  C: Yes:TRUE
-     #  C: No:FALSE
-     -->
-
-     <!--
-     # IF: NOT SERVER_FLAG = TRUE
-     #
-     #
-     #
-     # Macro: SERVER_ID String
-     # Q: What's the Server ID?
-     #
-     #
-     #
-     #
-     # ENDIF:
-     -->
-
-     <!--
-     # Macro: password string
-     # Q: What is the user password?
-     -->
-
-     <password>swordfish</password>
-
-=head1 AUTHOR
-
-David Weintraub
-L<mailto:david@weintraub.name>
-
-=head1 COPYRIGHT
-
-Copyright (c) 2013 by David Weintraub. All rights reserved. This
-program is covered by the open source BMAB license.
-
-The BMAB (Buy me a beer) license allows you to use all code for whatever
-reason you want with these three caveats:
+This program allows for XML file handling. However, because XML comments
+require both an opening and closing comment character, special care must
+be taken:
 
 =over 4
 
-=item 1.
+=item 1
 
-If you make any modifications in the code, please consider sending them
-to me, so I can put them into my code.
+The macro definitions  must begin with a C<< <!-- >> and end with C<<
+--> >>.
 
-=item 2.
+=item 2
 
-Give me attribution and credit on this program.
+When using C<IF:> and C<ENDIF:> macros, you must make sure you don't put
+comments into the lines that will be commented out. XML doesn't like
+comments within comments, and this may produce XML errors.
 
-=item 3.
+=item 3
 
-If you're in town, buy me a beer. Or, a cup of coffee which is what I'd
-prefer. Or, if you're feeling really spendthrify, you can buy me lunch.
-I promise to eat with my mouth closed and to use a napkin instead of my
-sleeves.
+Autoconfig.pl will use the comment style that the C<IF:> macro lines begins
+with. Make sure your C<IF:> macro line begins with a C<< <!-- >>:
+
+Wrong: This will attempt to comment out the XML by prefixing the lines
+with C<#>.
+
+    <!--
+    # IF: SYSTEM_TYPE = SERVER
+    -->
+
+Right: This will comment out the lines as XML style comments
+
+    <!-- IF: SYSTEM_TYPE = SERVER -->
 
 =back
+
+=head1 AUTHOR
+
+David Weintraub L<mailto:dweintraub@travelclick.net>
 
 =cut
