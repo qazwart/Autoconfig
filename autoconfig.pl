@@ -22,11 +22,11 @@ use Sys::Hostname;
 use constant {
     COMMENT_LINE	=> qr@^(?:<\!--|#|//)\s*@,
     COMMENT_MARK	=> qr@^(<\!--|#|//)@,		       #For capturing what the comment mark is
-    ONE_PARAM		=> qr/\s+(.*)/,
+    ONE_PARAM		=> qr/\s+(.+)/,
     TWO_PARAMS		=> qr/\s+(\S+)\s+(?:-\s+)?(\S+)/, #Dash is optional
     ONE_TWO_PARAMS	=> qr/\s+(\S+)(?:\s+)?(\S+)?(?:\s+)?(\S+)?/, 
-    START_XML_COMMENT	=> qq(<!--),
-    END_XML_COMMENT	=>  qq(-->),
+    START_XML_COMMENT	=> q(^\s*<!--),
+    END_XML_COMMENT	=> q(\s*-->\s*$),
     NULL_OK		=> qr@^NULL(:?_OK)$@i,
 };
 
@@ -56,7 +56,7 @@ use constant {
     HELP_LINE		=> qr/@{[COMMENT_LINE]}@{[HELP]}:@{[ONE_PARAM]}/i,
     CHOICE_LINE		=> qr/@{[COMMENT_LINE]}@{[CHOICE]}:@{[ONE_PARAM]}/i,
     DEFAULT_LINE	=> qr/@{[COMMENT_LINE]}@{[DEFAULT]}:@{[ONE_PARAM]}/i,
-    IF_LINE		=> qr/@{[COMMENT_LINE]}@{[IF]}:\s+(?:(NOT)\s+)?(\S+)\s+(?:=\s)?(\S+)(?:\s*@{[END_XML_COMMENT]})?/i,
+    IF_LINE		=> qr/@{[COMMENT_LINE]}@{[IF]}:\s+(?:(NOT)\s+)?(\S+)\s+(?:=\s*)?(.+)/i,
     ENDIF_LINE		=> qr/@{[COMMENT_LINE]}@{[ENDIF]}:/i,
     ANSWER_LINE		=> qr/^(\S+)\s*=\s*(.*)/,	# macro_name = answer
 };
@@ -229,6 +229,8 @@ sub parse_questions {
 	my $macro;
 	while ( my $line = <$template_fh> ) {
 	    chomp $line;
+            my $saved_line = $line;
+            $line =~ s/@{[END_XML_COMMENT]}//;
 	    $file_line++;
 	    if ( $line =~ MACRO_LINE ) {
 		my $macro_name = $1;
@@ -305,6 +307,7 @@ sub parse_questions {
 	    }
 	    elsif ( $line =~ FORCE_LINE ) {
 		my $format = $1;
+                $format =~ s/\s*-->\s*$//;
 		if ( not defined $macro ) {
 		    warn qq(AUTOCONFIG: WARNING: Bad macro definition at "$file" on line $file_line);
 		    $error_count++;
@@ -522,6 +525,7 @@ sub read_in_answers {
     while ( my $line = <$answer_file_fh> ) {
 	chomp $line;
 	$line =~ s/\r$//;	#Incase line has Windows CRLF line endings. Chomp doesn't remove \r.
+        my $saved_line = $line;
 	$file_line++;
 	next if $line =~ COMMENT_LINE;	#Skip Comment Lines
 	next if $line =~ /^\s*$/;	#Skip Empty Lines
@@ -1000,9 +1004,11 @@ sub fill_in_templates {
 	my $comment_symbol; #Capture comment symbol on "IF" lines
 	my $file_line = 0;
 FILE_LINE:
-	for my $line ( <$template_fh> ) {
+	while ( my $line = <$template_fh> ) {
 	    chomp $line;
 	    $file_line++;
+            my $saved_line = $line;     #Incase we need the ACTUAL line
+            $line =~ s/@{[END_XML_COMMENT]}//;
 
 	    #
 	    # Push @if_list on If Line and go to next line
@@ -1020,7 +1026,7 @@ FILE_LINE:
 		    $if = If->new( $parameter, $value, 0 );
 		}
 		push @if_list, $if;
-		print $config_fh "$line\n";
+		print $config_fh "$saved_line\n";
 		next FILE_LINE;
 	    }
 
@@ -1029,7 +1035,7 @@ FILE_LINE:
 	    #
 	    if ( $line =~ ENDIF_LINE ) {
 		pop @if_list;
-		print $config_fh "$line\n";
+		print $config_fh "$saved_line\n";
 		next FILE_LINE;
 	    }
 
@@ -1044,28 +1050,26 @@ FILE_LINE:
 		my $macro_value = "";
 		$macro_value =  $macro_hash{ $if_parameter } if exists $macro_hash{ $if_parameter };
 
-		if ( $if_negation and $if_value eq $macro_value ) {
-		    if ( $line eq START_XML_COMMENT or $line eq END_XML_COMMENT) {
-			$line = ""; # Remove start and end XML comments during if blotting
-		    }
-		    if ( not $comment_symbol eq START_XML_COMMENT ) {
+		if ( $if_negation and uc $if_value eq uc $macro_value ) {
+		    if ( not $comment_symbol =~ START_XML_COMMENT ) {
 			print $config_fh "$comment_symbol $line\n";
 		    }
 		    else {
-			print $config_fh "@{[START_XML_COMMENT]} $line @{[END_XML_COMMENT]}\n";
+                        $saved_line =~ s/^\s*<!--//;
+                        $saved_line =~ s/-->\s*$//;
+			print $config_fh "<!-- $saved_line -->\n";
 		    }
 
 		    next FILE_LINE;
 		}
-		if ( not $if_negation and $if_value ne $macro_value ) {
-		    if ( $line eq START_XML_COMMENT or $line eq END_XML_COMMENT) {
-			$line = ""; # Remove start and end XML comments during if blotting
-		    }
-		    if ( not $comment_symbol eq START_XML_COMMENT ) {
-			print $config_fh "$comment_symbol $line\n";
+		if ( not $if_negation and uc $if_value ne uc $macro_value ) {
+		    if ( not $comment_symbol =~ START_XML_COMMENT ) {
+			print $config_fh "$comment_symbol $saved_line\n";
 		    }
 		    else {
-			print $config_fh "@{[START_XML_COMMENT]} $line @{[END_XML_COMMENT]}\n";
+                        $saved_line =~ s/^\s*<!--//;
+                        $saved_line =~ s/-->\s*$//;
+			print $config_fh "<!-- $saved_line -->\n";
 		    }
 		    next FILE_LINE;
 		}
@@ -1074,19 +1078,19 @@ FILE_LINE:
 	    #
 	    # Line is okay to do substitution
 	    #
-	    my @macro_list = ( $line =~ /%(\w+)%/g );
+	    my @macro_list = ( $saved_line =~ /%(\w+)%/g );
 	    for my $macro ( @macro_list ) {
 		if ( exists $macro_hash{ uc $macro } ) {
 		    my $macro_value = $macro_hash{ uc $macro };
-		    $line =~ s/%$macro%/$macro_value/ig;
+		    $saved_line =~ s/%$macro%/$macro_value/ig;
 		}
 		else {
 		    warn qq(AUTOCONFIG: WARNING: Possible missing definition for macro "%$macro%": ) .
 			qq(File "$template_file" Line: $file_line\n);
 		}
 	    } #for my $macro ( @macro_list )
-	    print $config_fh "$line\n";
-	} # for my $line ( <$template_fh> )
+	    print $config_fh "$saved_line\n";
+	} # while ( my $line = <$template_fh> )
 	close $config_fh;
     } # for my $template_file ( @template_list )
 }
@@ -1542,7 +1546,7 @@ sub Force {
     if ( defined $force ) {
 	$force = lc $force;
 	if ( $force ne "uc" and $force ne "lc" and $force ne "ucfirst" ) {
-	    carp qq(Force must be either "uc", "lc", or "ucfirst" );
+	    carp qq(Force is "$force". It must be either "uc", "lc", or "ucfirst" );
 	    return;
 	}
 	$self->{FORCE} = $force;

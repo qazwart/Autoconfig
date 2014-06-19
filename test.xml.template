@@ -1,93 +1,77 @@
 <!-- Testing my program via XML -->
 
-<!--
-# MACRO: FOO_BAR_XML WORDS
-# Q: What do you want uppercased (XML)?
-# FORCE: UCFIRST
--->
+<!-- MACRO: FOO_BAR_XML WORDS -->
+<!-- Q: What do you want uppercased (XML)? -->
+<!-- FORCE: UCFIRST -->
 
 <force sentence=%FOO_BAR_XML%/>
 
-<!--
-# macro: client_or_server_XML choice
-# Q: Is this a client or a server (XML)?
-# C: Client:client
-# C: Server:server
--->
+<!--  macro: client_or_server_XML choice -->
+<!--  Q: Is this a client or a server (XML)? -->
+<!--  C: Client:client -->
+<!--  C: Server:server -->
 
-<!--
-# IF: client_or_server_XML = server
+<Client_or_Server>%client_or_server_xml%</Client_or_Server>
 
-# macro: server_id_XML integer
-# RANGE: 100 - 999
-# q: What is the ID of this server (XML)?
-# h: This should be a three digit integer
-#
--->
+<!--  IF: client_or_server_XML = server -->
+
+<!--  macro: server_id_XML integer -->
+<!--  RANGE: 100 - 999 -->
+<!--  q: What is the ID of this server (XML)? -->
+<!--  h: This should be a three digit integer -->
 
 <server>%SERVER_ID_XML%</server>
 
-<!--
-# ENDIF:
--->
+<!--  ENDIF: -->
 
-<!--
-# IF: not client_or_server_XML = server
--->
+<!-- IF: not client_or_server_XML = server -->
 
-<!--
-# macro: client_id_XML Integer
-# Q: What is the client number (XML)?
--->
+<!--  macro: client_id_XML Integer -->
+<!--  Q: What is the client number (XML)? -->
 
 <client>%client_id_XML%</client>
 
-<!--
-# ENDIF:
--->
+<!--  ENDIF: -->
 
-<!--
-# MACRO: HOST_ID_XML IPADDR
-# FROM: 10.1.0.0
-# TO: 10.1.0.255
-# Q: What is the host IP Address (XML)?
--->
+<!-- IF: CLIENT_OR_SERVER_XML = CLIENT -->
+
+<client>%client_id%</client>
+
+<!-- endif: -->
+
+<!--  MACRO: HOST_ID_XML IPADDR -->
+<!--  FROM: 10.1.0.0 -->
+<!--  TO: 10.1.0.255 -->
+<!--  Q: What is the host IP Address (XML)? -->
 
 <host id=%HOST_ID_XML%/>
 
-<!--
-# MACRO: EMAIL_HOST_XML REGEX
-# FORMAT: [A-Z0-9]{2,4}\.mailhost.com
-# Q: What is the Mailhost name (XML)?
--->
+<!--  MACRO: EMAIL_HOST_XML REGEX -->
+<!--  FORMAT: [A-Z0-9]{2,4}\.mailhost.com -->
+<!--  Q: What is the Mailhost name (XML)? -->
 
 <properties>
     <mailhost id=%EMAIL_HOST_XML%/>
 
-<!--
-# MACRO: POOL_SIZE_XML CHOICE
-# Q: How big should the Cache Poll be (XML)?
-# C: Small:10
-# C: Medium:30
-# C: Really, really big:100
-# D: 2
--->
+<!--  MACRO: POOL_SIZE_XML CHOICE -->
+<!--  Q: How big should the Cache Poll be (XML)? -->
+<!--  C: Small:10 -->
+<!--  C: Medium:30 -->
+<!--  C: Really, really big:100 -->
+<!--  D: 2 -->
 
     <pool size=%POOL_SIZE_XML%/>
 
-<!--
-# MACRO: START_PERIOD_XML DATE
-# FORMAT: YYYY-MM-DD
-# FROM: 2010-01-01
-# Q: When should the start period begin (XML)?
--->
+
+<!--  MACRO: START_PERIOD_XML DATE -->
+<!--  FORMAT: YYYY-MM-DD -->
+<!--  FROM: 2010-01-01 -->
+<!--  Q: When should the start period begin (XML)? -->
 
     <start period=%START_PERIOD_XML%/>
 </properties>
 
-<!--
-# MACRO: USER_ID_XML
-# Q: What is thou User Id (XML)?
--->
+<!--  MACRO: USER_ID_XML -->
+<!--  Q: What is thou User Id (XML)? -->
 
 <user>%USER_ID_XML%</user>

@@ -9,6 +9,8 @@ force.sentence=%FOO_BAR%
 # C: Client:client
 # C: Server:server
 
+Client_or_Server=%client_or_server%
+
 # IF: client_or_server = server
 
 # macro: server_id integer
@@ -25,6 +27,12 @@ server_id=%SERVER_ID%
 
 # macro: client_id Integer
 # Q: What is the client number?
+
+client_id=%client_id%
+
+# ENDIF:
+
+# IF: CLIENT_OR_SERVER = client
 
 client_id=%client_id%
 
